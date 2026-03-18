@@ -30,6 +30,15 @@ exports.handler = async function(event) {
     const pageRes = await httpsGet(`https://www.youtube.com/watch?v=${videoId}`);
     const pageHtml = pageRes.body;
 
+    // DEBUG: возвращаем кусок HTML чтобы понять структуру
+    if (event.queryStringParameters?.debug === '1') {
+      const idx = pageHtml.indexOf('captionTracks');
+      const snippet = idx >= 0
+        ? pageHtml.slice(Math.max(0, idx - 50), idx + 500)
+        : 'captionTracks NOT FOUND in page. Page length: ' + pageHtml.length + ' | First 500 chars: ' + pageHtml.slice(0, 500);
+      return { statusCode: 200, headers, body: JSON.stringify({ debug: snippet }) };
+    }
+
     // Пробуем несколько паттернов — YouTube меняет структуру
     let tracks = null;
 
