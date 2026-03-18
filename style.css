@@ -3608,11 +3608,12 @@ h1 { font-size:20px; font-weight:900; letter-spacing:-.4px; }
   gap: 4px;
   padding: 2px 0; }
 
-.rn-followup-line { font-family: var(--font); animation: chunkIn .2s ease both; }
+.rn-followup-line { font-family: var(--font);
   font-size: 14px;
   color: var(--tx);
   line-height: 1.75;
-  padding: 2px 0; }
+  padding: 2px 0;
+  animation: chunkIn .2s ease both; }
 
 .rn-followup-formula { display: inline-block;
   font-family: var(--font-d);
