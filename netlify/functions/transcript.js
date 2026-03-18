@@ -30,12 +30,49 @@ exports.handler = async function(event) {
     const pageRes = await httpsGet(`https://www.youtube.com/watch?v=${videoId}`);
     const pageHtml = pageRes.body;
 
-    const match = pageHtml.match(/"captionTracks":\[(.+?)\],"audioTracks"/);
-    if (!match) {
-      return { statusCode: 404, headers, body: JSON.stringify({ error: 'No captions found', transcript: null }) };
+    // Пробуем несколько паттернов — YouTube меняет структуру
+    let tracks = null;
+
+    // Паттерн 1: старый формат
+    const m1 = pageHtml.match(/"captionTracks":\[(.+?)\],"audioTracks"/);
+    if (m1) {
+      try { tracks = JSON.parse('[' + m1[1] + ']'); } catch(e) {}
     }
 
-    const tracks = JSON.parse('[' + match[1] + ']');
+    // Паттерн 2: новый формат playerCaptionsTracklistRenderer
+    if (!tracks) {
+      const m2 = pageHtml.match(/"captionTracks":\s*(\[.*?\])\s*,\s*"(audioTracks|translationLanguages)"/s);
+      if (m2) {
+        try { tracks = JSON.parse(m2[1]); } catch(e) {}
+      }
+    }
+
+    // Паттерн 3: через ytInitialPlayerResponse
+    if (!tracks) {
+      const m3 = pageHtml.match(/ytInitialPlayerResponse\s*=\s*({.+?})\s*;/s);
+      if (m3) {
+        try {
+          const player = JSON.parse(m3[1]);
+          tracks = player?.captions?.playerCaptionsTracklistRenderer?.captionTracks || null;
+        } catch(e) {}
+      }
+    }
+
+    // Паттерн 4: поиск baseUrl субтитров напрямую
+    if (!tracks) {
+      const m4 = pageHtml.match(/"baseUrl":"(https:\/\/www\.youtube\.com\/api\/timedtext[^"]+)"/g);
+      if (m4 && m4.length > 0) {
+        tracks = m4.map(s => {
+          const url = s.replace(/"baseUrl":"/, '').replace(/"$/, '');
+          const lang = url.match(/lang=([a-z]+)/)?.[1] || 'unknown';
+          return { baseUrl: url, languageCode: lang };
+        });
+      }
+    }
+
+    if (!tracks || tracks.length === 0) {
+      return { statusCode: 404, headers, body: JSON.stringify({ error: 'No captions found', transcript: null }) };
+    }
     let track = tracks.find(t => t.languageCode === 'ru')
              || tracks.find(t => t.languageCode === 'en')
              || tracks[0];
