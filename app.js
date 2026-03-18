@@ -1563,16 +1563,22 @@ function cancelMatLink() {
 }
 // Получаем метаданные YouTube через oEmbed (без CORS, без ключа)
 async function fetchYouTubeMeta(videoId) {
-  const url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('oEmbed ' + res.status);
-  return await res.json(); // { title, author_name, thumbnail_url }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 6000);
+  const res = await fetch(`https://rare-koala-64.dophamine2.deno.net?videoId=${videoId}&action=meta`, { signal: controller.signal });
+  clearTimeout(timer);
+  if (!res.ok) throw new Error('Meta fetch failed: ' + res.status);
+  const data = await res.json();
+  return { title: data.title, author_name: data.channel, thumbnail_url: data.thumbnail };
 }
 
 // Получаем субтитры через Supadata API (бесплатно, без ключа, без CORS)
 async function fetchYouTubeTranscript(videoId) {
   try {
-    const res = await fetch(`https://tutor-transcript.hack-yanov.workers.dev?videoId=${videoId}`);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(`https://rare-koala-64.dophamine2.deno.net?videoId=${videoId}`, { signal: controller.signal });
+    clearTimeout(timer);
     if (!res.ok) { console.warn('[Transcript] Function returned', res.status); return null; }
     const data = await res.json();
     if (data.transcript) {
@@ -1665,14 +1671,17 @@ async function submitMatLink() {
   ytStep(3, 44, 'анализируем название и тему...');
   await sleep(500);
 
-  // Шаг 4 — Загрузка субтитров (реальный запрос)
+  // Шаг 4 — Загрузка субтитров (реальный запрос, таймаут 8с)
   ytStep(4, 60, 'извлекаем субтитры и ключевые понятия...');
-  const transcriptResult = await fetchYouTubeTranscript(ytId).catch(() => null);
+  const transcriptResult = await Promise.race([
+    fetchYouTubeTranscript(ytId).catch(() => null),
+    new Promise(r => setTimeout(() => r(null), 9000))
+  ]);
   if (transcriptResult) {
     matContext.transcript = transcriptResult;
     console.log('[YT] Transcript loaded, length:', transcriptResult.length);
   } else {
-    console.warn('[YT] Transcript unavailable');
+    console.warn('[YT] Transcript unavailable — продолжаем без субтитров');
   }
 
   // Шаг 5 — Формирование структуры
