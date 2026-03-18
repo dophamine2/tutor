@@ -1896,7 +1896,7 @@ ${allTimecodes ? `\nВСЕ ДОСТУПНЫЕ ТАЙМКОДЫ (использу
     <ul>
       <li><a class="yt-ts-link" href="https://www.youtube.com/watch?v=${ytId}&t=СЕКУНДЫs" target="_blank">▶ М:СС</a> <strong>Название момента</strong> — краткое описание что происходит в этом фрагменте</li>
     </ul>
-    <p style="font-size:11px;color:var(--tx2);margin-top:4px">↑ Нажми ▶ чтобы перейти к этому месту в видео</p>
+
   </div>
 
   <div class="ai-note-section">
