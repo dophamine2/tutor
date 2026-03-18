@@ -4590,36 +4590,117 @@ h1 { font-size:20px; font-weight:900; letter-spacing:-.4px; }
 }
 
 /* ── AI Конспект ── */
-.ai-note { display:flex; flex-direction:column; gap:22px; max-width:680px; }
-.ai-note-section { padding:0 0 22px 0; border-bottom:1px solid var(--border); }
-.ai-note-section:last-child { border-bottom:none; padding-bottom:0; }
-.ai-note-section-title { font-family:var(--font-d); font-size:11px; font-weight:700; color:var(--tx2); text-transform:uppercase; letter-spacing:.07em; margin-bottom:10px; }
-.ai-note-section p { font-size:14px; color:var(--tx); line-height:1.75; margin:0; text-align:left; }
-.ai-note-section ul { margin:0; padding-left:0; display:flex; flex-direction:column; gap:8px; list-style:none; }
-.ai-note-section li { font-size:14px; color:var(--tx); line-height:1.65; padding-left:16px; position:relative; text-align:left; }
-.ai-note-section li::before { content:'—'; position:absolute; left:0; color:var(--tx2); font-weight:400; }
-.ai-note-section strong { color:var(--tx); font-weight:700; }
-.matws-summary-title { margin-bottom:20px; line-height:1.3; }
+/* ── AI Note — анимация появления ── */
+@keyframes note-fade-in {
+  from { opacity:0; transform:translateY(14px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes section-slide-in {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.ai-note {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-width: 700px;
+  animation: note-fade-in .5s ease both;
+}
+
+.ai-note-section {
+  padding: 28px 0;
+  border-bottom: 1px solid var(--border);
+  animation: section-slide-in .45s ease both;
+}
+.ai-note-section:nth-child(1) { animation-delay: .05s; }
+.ai-note-section:nth-child(2) { animation-delay: .10s; }
+.ai-note-section:nth-child(3) { animation-delay: .15s; }
+.ai-note-section:nth-child(4) { animation-delay: .20s; }
+.ai-note-section:nth-child(5) { animation-delay: .25s; }
+.ai-note-section:nth-child(6) { animation-delay: .30s; }
+.ai-note-section:nth-child(7) { animation-delay: .35s; }
+.ai-note-section:nth-child(8) { animation-delay: .40s; }
+.ai-note-section:last-child { border-bottom: none; padding-bottom: 0; }
+
+.ai-note-section-title {
+  font-family: var(--font-d);
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--tx2);
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  margin-bottom: 14px;
+}
+
+.ai-note-section p {
+  font-size: 15px;
+  color: var(--tx);
+  line-height: 2;
+  margin: 0;
+  text-align: left;
+}
+
+.ai-note-section ul {
+  margin: 0;
+  padding-left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  list-style: none;
+}
+
+.ai-note-section li {
+  font-size: 15px;
+  color: var(--tx);
+  line-height: 1.85;
+  padding-left: 20px;
+  position: relative;
+  text-align: left;
+}
+
+.ai-note-section li::before {
+  content: '—';
+  position: absolute;
+  left: 0;
+  color: var(--tx2);
+  font-weight: 400;
+}
+
+.ai-note-section strong { color: var(--tx); font-weight: 700; }
+.matws-summary-title { margin-bottom: 24px; line-height: 1.3; }
 
 /* ── Citations ── */
 /* ── YouTube таймкод-ссылки ── */
 .yt-ts-link {
-  display:inline-flex;
-  align-items:center;
-  gap:3px;
-  background:#ff00001a;
-  color:#c00;
-  border:1px solid #ff000033;
-  border-radius:6px;
-  padding:2px 8px;
-  font-size:11px;
-  font-weight:700;
-  font-family:var(--font);
-  text-decoration:none;
-  white-space:nowrap;
-  transition:background var(--dur), transform var(--dur);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ff00001a;
+  color: #c00;
+  border: 1.5px solid #ff000033;
+  border-radius: 8px;
+  padding: 3px 10px 3px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font);
+  text-decoration: none;
+  white-space: nowrap;
+  vertical-align: middle;
+  margin: 0 3px;
+  position: relative;
+  top: -1px;
+  transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
 }
-.yt-ts-link:hover { background:#ff000030; transform:scale(1.05); }
+.yt-ts-link:hover {
+  background: #ff000028;
+  transform: scale(1.07) translateY(-1px);
+  box-shadow: 0 3px 10px #ff000025;
+  border-color: #ff000055;
+}
+.yt-ts-link:active {
+  transform: scale(0.97);
+}
 
 .ai-cite {
   display:inline-flex;
