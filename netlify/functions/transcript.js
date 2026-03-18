@@ -16,81 +16,75 @@ exports.handler = async function(event) {
     return { statusCode: 400, headers, body: JSON.stringify({ error: 'videoId required' }) };
   }
 
-  function httpsGet(url) {
+  function httpsGet(url, reqHeaders = {}) {
     return new Promise((resolve, reject) => {
-      https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, res => {
+      https.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept-Language': 'ru-RU,ru;q=0.9,en;q=0.8',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          ...reqHeaders
+        }
+      }, res => {
         let data = '';
         res.on('data', chunk => data += chunk);
-        res.on('end', () => resolve({ status: res.statusCode, body: data }));
+        res.on('end', () => resolve({ status: res.statusCode, body: data, headers: res.headers }));
       }).on('error', reject);
     });
   }
 
   try {
-    const pageRes = await httpsGet(`https://www.youtube.com/watch?v=${videoId}`);
-    const pageHtml = pageRes.body;
-
-    // DEBUG: возвращаем кусок HTML чтобы понять структуру
-    if (event.queryStringParameters?.debug === '1') {
-      const idx = pageHtml.indexOf('captionTracks');
-      const snippet = idx >= 0
-        ? pageHtml.slice(Math.max(0, idx - 50), idx + 500)
-        : 'captionTracks NOT FOUND in page. Page length: ' + pageHtml.length + ' | First 500 chars: ' + pageHtml.slice(0, 500);
-      return { statusCode: 200, headers, body: JSON.stringify({ debug: snippet }) };
-    }
-
-    // Пробуем несколько паттернов — YouTube меняет структуру
-    let tracks = null;
-
-    // Паттерн 1: старый формат
-    const m1 = pageHtml.match(/"captionTracks":\[(.+?)\],"audioTracks"/);
-    if (m1) {
-      try { tracks = JSON.parse('[' + m1[1] + ']'); } catch(e) {}
-    }
-
-    // Паттерн 2: новый формат playerCaptionsTracklistRenderer
-    if (!tracks) {
-      const m2 = pageHtml.match(/"captionTracks":\s*(\[.*?\])\s*,\s*"(audioTracks|translationLanguages)"/s);
-      if (m2) {
-        try { tracks = JSON.parse(m2[1]); } catch(e) {}
+    // Шаг 1: получаем innertube API key и visitor data через /youtubei/v1/player
+    const playerPayload = JSON.stringify({
+      videoId,
+      context: {
+        client: {
+          clientName: 'WEB',
+          clientVersion: '2.20240101',
+          hl: 'ru',
+          gl: 'RU'
+        }
       }
-    }
+    });
 
-    // Паттерн 3: через ytInitialPlayerResponse
-    if (!tracks) {
-      const m3 = pageHtml.match(/ytInitialPlayerResponse\s*=\s*({.+?})\s*;/s);
-      if (m3) {
-        try {
-          const player = JSON.parse(m3[1]);
-          tracks = player?.captions?.playerCaptionsTracklistRenderer?.captionTracks || null;
-        } catch(e) {}
-      }
-    }
+    const playerRes = await new Promise((resolve, reject) => {
+      const options = {
+        hostname: 'www.youtube.com',
+        path: '/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+          'X-YouTube-Client-Name': '1',
+          'X-YouTube-Client-Version': '2.20240101',
+          'Content-Length': Buffer.byteLength(playerPayload)
+        }
+      };
+      const req = https.request(options, res => {
+        let data = '';
+        res.on('data', chunk => data += chunk);
+        res.on('end', () => resolve({ status: res.statusCode, body: data }));
+      });
+      req.on('error', reject);
+      req.write(playerPayload);
+      req.end();
+    });
 
-    // Паттерн 4: поиск baseUrl субтитров напрямую
-    if (!tracks) {
-      const m4 = pageHtml.match(/"baseUrl":"(https:\/\/www\.youtube\.com\/api\/timedtext[^"]+)"/g);
-      if (m4 && m4.length > 0) {
-        tracks = m4.map(s => {
-          const url = s.replace(/"baseUrl":"/, '').replace(/"$/, '');
-          const lang = url.match(/lang=([a-z]+)/)?.[1] || 'unknown';
-          return { baseUrl: url, languageCode: lang };
-        });
-      }
-    }
+    const player = JSON.parse(playerRes.body);
+    const tracks = player?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
 
     if (!tracks || tracks.length === 0) {
       return { statusCode: 404, headers, body: JSON.stringify({ error: 'No captions found', transcript: null }) };
     }
+
+    // Выбираем русский трек, если нет — английский, если нет — первый
     let track = tracks.find(t => t.languageCode === 'ru')
              || tracks.find(t => t.languageCode === 'en')
              || tracks[0];
 
-    if (!track || !track.baseUrl) {
-      return { statusCode: 404, headers, body: JSON.stringify({ error: 'No usable track', transcript: null }) };
-    }
-
     const subUrl = track.baseUrl.replace(/\\u0026/g, '&') + '&fmt=json3';
+
+    // Шаг 2: загружаем субтитры
     const subRes = await httpsGet(subUrl);
     const subData = JSON.parse(subRes.body);
 
@@ -101,7 +95,7 @@ exports.handler = async function(event) {
         text: e.segs.map(s => s.utf8 || '').join('').replace(/\n/g, ' ').trim(),
         offset: Math.floor((e.tStartMs || 0) / 1000)
       }))
-      .filter(e => e.text && e.text !== ' ');
+      .filter(e => e.text && e.text.trim() !== '');
 
     const fullText = lines.map(l => l.text).join(' ');
 
@@ -110,7 +104,7 @@ exports.handler = async function(event) {
       headers,
       body: JSON.stringify({
         transcript: fullText,
-        lines: lines,
+        lines,
         language: track.languageCode,
         title: track.name?.simpleText || null
       })
