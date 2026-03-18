@@ -24,7 +24,7 @@ exports.handler = async function(event) {
       headers: {
         'Content-Type': 'application/json',
         'x-rapidapi-host': 'youtube-transcript3.p.rapidapi.com',
-        'x-rapidapi-key': 'ed0f52391emsh0fe8004fa3f1bb4p143422jsn5eb977e0024a'
+        'x-rapidapi-key': process.env.RAPIDAPI_KEY || 'ed0f52391emsh0fe8004fa3f1bb4p143422jsn5eb977e0024a'
       }
     };
 
