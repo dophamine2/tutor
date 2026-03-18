@@ -2238,36 +2238,46 @@ function addMatMsg(role, text) {
   const d = document.createElement('div');
   d.className = 'msg ' + role;
 
-  let html = esc(text);
-
   if (role === 'bot') {
-    // Citations [N] → кликабельные бейджи
-    const sources = matContext?.sources || [];
-    if (sources.length > 0) {
-      html = html.replace(/\[(\d+)\]/g, (match, n) => {
-        const src = sources.find(s => s.index === parseInt(n));
-        if (!src) return match;
-        return `<a class="ai-cite" href="${src.url}" target="_blank" title="${src.title}">${n}</a>`;
-      });
-    }
-    // KaTeX: $...$ → рендер формул
-    html = html.replace(/\$([^$\n]+)\$/g, (match, formula) => {
-      try {
-        if (typeof katex !== 'undefined') {
-          return katex.renderToString(formula, { throwOnError: false, displayMode: false, output: 'html', strict: false });
-        }
-      } catch(e) {}
-      return `<code>${formula}</code>`;
-    });
-    // Переносы строк
-    html = html.replace(/\n/g, '<br>');
-  }
+    // Создаём пузырь сразу с анимацией загрузки
+    d.innerHTML = `<div class="m-av">AI</div><div class="bbl mat-bbl-loading"><span class="mat-typing-dots"><span></span><span></span><span></span></span></div>`;
+    win.appendChild(d);
+    win.scrollTop = win.scrollHeight;
 
-  d.innerHTML = role === 'bot'
-    ? `<div class="m-av">AI</div><div class="bbl">${html}</div>`
-    : `<div class="bbl">${esc(text)}</div>`;
-  win.appendChild(d);
-  win.scrollTop = win.scrollHeight;
+    // Асинхронно вставляем реальный контент когда он готов
+    d._setContent = (replyText) => {
+      let html = esc(replyText);
+      const sources = matContext?.sources || [];
+      if (sources.length > 0) {
+        html = html.replace(/\[(\d+)\]/g, (match, n) => {
+          const src = sources.find(s => s.index === parseInt(n));
+          if (!src) return match;
+          return `<a class="ai-cite" href="${src.url}" target="_blank" title="${src.title}">${n}</a>`;
+        });
+      }
+      html = html.replace(/\$([^$\n]+)\$/g, (match, formula) => {
+        try {
+          if (typeof katex !== 'undefined') {
+            return katex.renderToString(formula, { throwOnError: false, displayMode: false, output: 'html', strict: false });
+          }
+        } catch(e) {}
+        return `<code>${formula}</code>`;
+      });
+      html = html.replace(/\n/g, '<br>');
+      const bbl = d.querySelector('.bbl');
+      if (bbl) {
+        bbl.classList.remove('mat-bbl-loading');
+        bbl.innerHTML = html;
+        bbl.style.animation = 'msgIn .25s cubic-bezier(.22,.68,0,1.2) both';
+      }
+      win.scrollTop = win.scrollHeight;
+    };
+  } else {
+    d.innerHTML = `<div class="bbl">${esc(text)}</div>`;
+    win.appendChild(d);
+    win.scrollTop = win.scrollHeight;
+  }
+  return d;
 }
 
 function doMatQ(btn) {
@@ -2283,8 +2293,7 @@ async function sendMatChat() {
   addMatMsg('user', txt);
   matChatBusy = true;
 
-  const typingId = 'mat-typing-' + Date.now();
-  addMatMsg('bot', '...', typingId);
+  const botMsg = addMatMsg('bot', '');
 
   try {
     let reply;
@@ -2331,11 +2340,9 @@ ${videoInfo}${transcript}
       reply = await gemini(system, txt);
     }
 
-    document.getElementById(typingId)?.remove();
-    addMatMsg('bot', reply);
+    if (botMsg?._setContent) botMsg._setContent(reply);
   } catch(e) {
-    document.getElementById(typingId)?.remove();
-    addMatMsg('bot', 'Ошибка соединения с AI.');
+    if (botMsg?._setContent) botMsg._setContent('Ошибка соединения с AI.');
   }
   matChatBusy = false;
 }
