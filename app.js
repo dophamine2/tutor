@@ -197,8 +197,23 @@ document.addEventListener('DOMContentLoaded', () => {
       if (users2[savedEmail]) { currentUser = users2[savedEmail]; bootDashboard(); return; }
     }
   } catch(e) {}
-  showScreen('auth');
-  switchAuth('login');
+  const GUEST = 'guest@tutor.app';
+  const users = allUsers();
+  if (!users[GUEST]) {
+    users[GUEST] = {
+      name: 'Гость', sname: '', email: GUEST, pass: '',
+      goal: 'ege', createdAt: Date.now(), subject: 'physics', perception: 'visual',
+      level: 'mid', diagScore: 3, progress: {},
+      duelStats: { total:0, wins:0, losses:0, rating:0 },
+      duelHistory: [], streak: 0, lastLogin: null,
+      activity: [Date.now()], totalTasks: 0, correctTasks: 0,
+      selectedClass: null,
+    };
+    saveUsers(users);
+  }
+  currentUser = users[GUEST];
+  DB_set('np_session', GUEST);
+  bootDashboard();
 });
 
 function showScreen(id) {
