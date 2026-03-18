@@ -1572,7 +1572,7 @@ async function fetchYouTubeMeta(videoId) {
 // Получаем субтитры через Supadata API (бесплатно, без ключа, без CORS)
 async function fetchYouTubeTranscript(videoId) {
   try {
-    const res = await fetch(`/api/transcript?videoId=${videoId}`);
+    const res = await fetch(`https://tutor-transcript.hack-yanov.workers.dev?videoId=${videoId}`);
     if (!res.ok) { console.warn('[Transcript] Function returned', res.status); return null; }
     const data = await res.json();
     if (data.transcript) {
