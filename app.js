@@ -1610,9 +1610,8 @@ async function submitMatLink() {
   });
 
   matContext = { type: 'youtube', url: val, ytId, title: null, channel: null, transcript: null, transcriptLines: null };
-  openMatWorkspaceFlow('▶ YouTube');
 
-  // Загружаем метаданные + субтитры параллельно
+  // Сначала загружаем метаданные и субтитры — потом запускаем воркспейс
   const [meta, transcript] = await Promise.allSettled([
     fetchYouTubeMeta(ytId),
     fetchYouTubeTranscript(ytId)
@@ -1632,6 +1631,9 @@ async function submitMatLink() {
   } else {
     console.warn('[YT] Transcript unavailable');
   }
+
+  // Запускаем воркспейс только после того как данные загружены
+  openMatWorkspaceFlow('▶ YouTube');
 }
 function openMatPhoto() {
   const inp = document.createElement('input');
