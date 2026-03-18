@@ -206,7 +206,7 @@ function showScreen(id) {
   const target = document.getElementById('s-' + id);
   if (!target) return;
   target.style.display = 'block';
-  requestAnimationFrame(() => requestAnimationFrame(() => target.classList.add('active')));
+  target.classList.add('active');
 }
 
 function setDate() {
