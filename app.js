@@ -1563,7 +1563,7 @@ function cancelMatLink() {
 }
 // Получаем метаданные YouTube через oEmbed (без CORS, без ключа)
 async function fetchYouTubeMeta(videoId) {
-  const res = await fetch(`https://tutor-transcript.hack-yanov.workers.dev?videoId=${videoId}&action=meta`);
+  const res = await fetch(`https://rare-koala-64.dophamine2.deno.net?videoId=${videoId}&action=meta`);
   if (!res.ok) throw new Error('Meta fetch failed: ' + res.status);
   const data = await res.json();
   return { title: data.title, author_name: data.channel, thumbnail_url: data.thumbnail };
@@ -1572,7 +1572,7 @@ async function fetchYouTubeMeta(videoId) {
 // Получаем субтитры через Supadata API (бесплатно, без ключа, без CORS)
 async function fetchYouTubeTranscript(videoId) {
   try {
-    const res = await fetch(`https://tutor-transcript.hack-yanov.workers.dev?videoId=${videoId}`);
+    const res = await fetch(`https://rare-koala-64.dophamine2.deno.net?videoId=${videoId}`);
     if (!res.ok) { console.warn('[Transcript] Function returned', res.status); return null; }
     const data = await res.json();
     if (data.transcript) {
