@@ -31,6 +31,17 @@ exports.handler = async function(event) {
     });
   }
 
+  // DEBUG
+  if (event.queryStringParameters?.debug === '1') {
+    const url = `https://www.youtube.com/api/timedtext?v=${videoId}&lang=en&fmt=json3`;
+    const res = await httpsGet(url);
+    return { statusCode: 200, headers, body: JSON.stringify({
+      status: res.status,
+      bodyLength: res.body?.length,
+      bodyPreview: res.body?.slice(0, 300)
+    })};
+  }
+
   // Пробуем языки по приоритету
   const langs = ['ru', 'en', 'a.ru', 'a.en'];
 
