@@ -1563,16 +1563,16 @@ function cancelMatLink() {
 }
 // Получаем метаданные YouTube через oEmbed (без CORS, без ключа)
 async function fetchYouTubeMeta(videoId) {
-  const res = await fetch(`https://rare-koala-64.dophamine2.deno.net?videoId=${videoId}&action=meta`);
-  if (!res.ok) throw new Error('Meta fetch failed: ' + res.status);
-  const data = await res.json();
-  return { title: data.title, author_name: data.channel, thumbnail_url: data.thumbnail };
+  const url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('oEmbed ' + res.status);
+  return await res.json(); // { title, author_name, thumbnail_url }
 }
 
 // Получаем субтитры через Supadata API (бесплатно, без ключа, без CORS)
 async function fetchYouTubeTranscript(videoId) {
   try {
-    const res = await fetch(`https://rare-koala-64.dophamine2.deno.net?videoId=${videoId}`);
+    const res = await fetch(`https://tutor-transcript.hack-yanov.workers.dev?videoId=${videoId}`);
     if (!res.ok) { console.warn('[Transcript] Function returned', res.status); return null; }
     const data = await res.json();
     if (data.transcript) {
@@ -1986,6 +1986,18 @@ ${allTimecodes ? `\nВСЕ ДОСТУПНЫЕ ТАЙМКОДЫ (использу
       return `<code>${formula}</code>`;
     });
 
+    // Превращаем таймкоды вида [0:18] (t=18s) в кликабельные бейджики
+    clean = clean.replace(/\[(\d+:\d+)\]\s*\(t=(\d+)s\)/g, (match, ts, sec) => {
+      const ytId = matContext?.ytId || '';
+      const ytUrl = ytId ? `https://www.youtube.com/watch?v=${ytId}&t=${sec}` : '#';
+      return `<a href="${ytUrl}" target="_blank" class="tc">▶ ${ts}</a>`;
+    });
+    // Также обрабатываем просто (t=Xs) без скобок
+    clean = clean.replace(/\(t=(\d+)s\)/g, (match, sec) => {
+      const ytId = matContext?.ytId || '';
+      const ytUrl = ytId ? `https://www.youtube.com/watch?v=${ytId}&t=${sec}` : '#';
+      return `<a href="${ytUrl}" target="_blank" class="tc">▶ ${Math.floor(sec/60)}:${String(sec%60).padStart(2,'0')}</a>`;
+    });
     body.innerHTML = clean;
 
     // ── Шаг 3: AI генерирует 4 вопроса по теме ──────────────

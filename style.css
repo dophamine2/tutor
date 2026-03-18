@@ -2330,7 +2330,64 @@ h1 { font-size:20px; font-weight:900; letter-spacing:-.4px; }
 
 .matws-summary-body strong { font-weight: 700; }
 
-.matws-chat-area { flex-shrink: 0; padding: 14px 24px 18px; background: var(--bg);
+/* Таймкоды — компактные */
+.matws-summary-body a[href*="youtube"],
+.matws-summary-body .tc {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--al);
+  color: var(--accent);
+  border-radius: 5px;
+  padding: 1px 6px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font);
+  text-decoration: none;
+  vertical-align: middle;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+.matws-summary-body a[href*="youtube"]:hover,
+.matws-summary-body .tc:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* Typewriter анимация для конспекта */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.matws-summary-body p,
+.matws-summary-body h2,
+.matws-summary-body h3,
+.matws-summary-body ul,
+.matws-summary-body ol,
+.matws-summary-body .ai-note-section {
+  animation: fadeSlideIn 0.35s ease both;
+}
+.matws-summary-body p:nth-child(1)  { animation-delay: 0.05s; }
+.matws-summary-body p:nth-child(2)  { animation-delay: 0.10s; }
+.matws-summary-body p:nth-child(3)  { animation-delay: 0.15s; }
+.matws-summary-body p:nth-child(4)  { animation-delay: 0.20s; }
+.matws-summary-body p:nth-child(5)  { animation-delay: 0.25s; }
+.matws-summary-body p:nth-child(6)  { animation-delay: 0.30s; }
+.matws-summary-body p:nth-child(7)  { animation-delay: 0.35s; }
+.matws-summary-body p:nth-child(8)  { animation-delay: 0.40s; }
+.matws-summary-body h2:nth-child(1) { animation-delay: 0.05s; }
+.matws-summary-body h2:nth-child(2) { animation-delay: 0.12s; }
+.matws-summary-body h2:nth-child(3) { animation-delay: 0.18s; }
+.matws-summary-body h3:nth-child(1) { animation-delay: 0.08s; }
+.matws-summary-body h3:nth-child(2) { animation-delay: 0.15s; }
+.matws-summary-body .ai-note-section:nth-child(1) { animation-delay: 0.05s; }
+.matws-summary-body .ai-note-section:nth-child(2) { animation-delay: 0.12s; }
+.matws-summary-body .ai-note-section:nth-child(3) { animation-delay: 0.20s; }
+.matws-summary-body .ai-note-section:nth-child(4) { animation-delay: 0.28s; }
+.matws-summary-body .ai-note-section:nth-child(5) { animation-delay: 0.36s; }
+.matws-summary-body .ai-note-section:nth-child(6) { animation-delay: 0.44s; }
+
+.matws-chat-area { flex-shrink: 0; padding: 14px 24px calc(18px + env(safe-area-inset-bottom)); background: var(--bg);
   display: flex; flex-direction: column; gap: 10px;
   border-top: 1px solid var(--border); }
 
@@ -2344,8 +2401,10 @@ h1 { font-size:20px; font-weight:900; letter-spacing:-.4px; }
   .matws-summary-body { font-size: 13px; }
   .matws-topbar { padding: 10px 14px; }
   .matws-topbar-title { font-size: 14px; }
-  .matws-chat-msgs { max-height: 260px; }
+  .matws-chat-msgs { max-height: 180px; }
   .matws-inp-wrap { padding: 10px 14px; }
+  .matws-chat-area { padding-bottom: calc(14px + env(safe-area-inset-bottom)); }
+  .matws-summary { padding-bottom: 100px; }
   .mat-suggs { padding: 8px 14px; gap: 6px; }
   .mat-sugg { font-size: 12px; padding: 7px 12px; }
 }
