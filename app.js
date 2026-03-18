@@ -1611,29 +1611,78 @@ async function submitMatLink() {
 
   matContext = { type: 'youtube', url: val, ytId, title: null, channel: null, transcript: null, transcriptLines: null };
 
-  // Сначала загружаем метаданные и субтитры — потом запускаем воркспейс
-  const [meta, transcript] = await Promise.allSettled([
-    fetchYouTubeMeta(ytId),
-    fetchYouTubeTranscript(ytId)
-  ]);
+  // ── Показываем экран загрузки сразу ──
+  const ov = document.getElementById('matws-ov');
+  ov.style.display = 'flex';
+  document.getElementById('matws-processing').style.display = 'flex';
+  document.getElementById('matws-workspace').style.display  = 'none';
+  document.getElementById('mat-chat-msgs').innerHTML = '';
 
-  if (meta.status === 'fulfilled') {
-    matContext.title   = meta.value.title       || null;
-    matContext.channel = meta.value.author_name || null;
-    console.log('[YT] Meta loaded:', matContext.title, '/', matContext.channel);
-  } else {
-    console.warn('[YT] oEmbed failed:', meta.reason?.message);
+  const steps    = document.querySelectorAll('.mpr-step');
+  const pctEl    = document.getElementById('mpr-pct');
+  const fillEl   = document.getElementById('mpr-topbar-fill');
+  const etaEl    = document.getElementById('mpr-eta');
+  steps.forEach(s => s.classList.remove('active','done'));
+
+  function ytStep(i, pct, eta) {
+    steps.forEach((s, si) => {
+      s.classList.remove('active','done');
+      if (si < i) s.classList.add('done');
+      else if (si === i) s.classList.add('active');
+    });
+    pctEl.textContent  = pct + '%';
+    fillEl.style.width = pct + '%';
+    etaEl.textContent  = eta;
   }
 
-  if (transcript.status === 'fulfilled' && transcript.value) {
-    matContext.transcript = transcript.value;
-    console.log('[YT] Transcript loaded, length:', transcript.value.length);
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+  // Шаг 0 — Подключение к YouTube
+  ytStep(0, 5, 'подключаемся к YouTube...');
+  await sleep(600);
+
+  // Шаг 1 — Получение данных видео
+  ytStep(1, 15, 'получаем данные видео...');
+  await sleep(400);
+
+  // Шаг 2 — Загрузка метаданных (реальный запрос)
+  ytStep(2, 28, 'загружаем метаданные...');
+  const metaResult = await fetchYouTubeMeta(ytId).catch(() => null);
+  if (metaResult) {
+    matContext.title   = metaResult.title       || null;
+    matContext.channel = metaResult.author_name || null;
+    console.log('[YT] Meta loaded:', matContext.title, '/', matContext.channel);
+  }
+
+  // Шаг 3 — Анализ названия и темы
+  ytStep(3, 44, 'анализируем название и тему...');
+  await sleep(500);
+
+  // Шаг 4 — Загрузка субтитров (реальный запрос)
+  ytStep(4, 60, 'извлекаем субтитры и ключевые понятия...');
+  const transcriptResult = await fetchYouTubeTranscript(ytId).catch(() => null);
+  if (transcriptResult) {
+    matContext.transcript = transcriptResult;
+    console.log('[YT] Transcript loaded, length:', transcriptResult.length);
   } else {
     console.warn('[YT] Transcript unavailable');
   }
 
-  // Запускаем воркспейс только после того как данные загружены
-  openMatWorkspaceFlow('▶ YouTube');
+  // Шаг 5 — Формирование структуры
+  ytStep(5, 78, 'формируем структуру конспекта...');
+  await sleep(600);
+
+  // Шаг 6 — Генерация конспекта
+  ytStep(6, 92, 'генерируем конспект...');
+  await sleep(400);
+
+  // Всё готово — переходим в воркспейс
+  steps.forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
+  pctEl.textContent  = '100%';
+  fillEl.style.width = '100%';
+  etaEl.textContent  = 'Готово!';
+  await sleep(350);
+  openMatWorkspace('▶ YouTube');
 }
 function openMatPhoto() {
   const inp = document.createElement('input');
