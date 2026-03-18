@@ -39,10 +39,12 @@ exports.handler = async function(event) {
       videoId,
       context: {
         client: {
-          clientName: 'WEB',
-          clientVersion: '2.20240101',
+          clientName: 'ANDROID',
+          clientVersion: '19.09.37',
+          androidSdkVersion: 30,
           hl: 'ru',
-          gl: 'RU'
+          gl: 'RU',
+          utcOffsetMinutes: 180
         }
       }
     });
@@ -54,9 +56,9 @@ exports.handler = async function(event) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'X-YouTube-Client-Name': '1',
-          'X-YouTube-Client-Version': '2.20240101',
+          'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip',
+          'X-YouTube-Client-Name': '3',
+          'X-YouTube-Client-Version': '19.09.37',
           'Content-Length': Buffer.byteLength(playerPayload)
         }
       };
