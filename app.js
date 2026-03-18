@@ -1563,10 +1563,10 @@ function cancelMatLink() {
 }
 // Получаем метаданные YouTube через oEmbed (без CORS, без ключа)
 async function fetchYouTubeMeta(videoId) {
-  const url = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error('oEmbed ' + res.status);
-  return await res.json(); // { title, author_name, thumbnail_url }
+  const res = await fetch(`https://tutor-transcript.hack-yanov.workers.dev?videoId=${videoId}&action=meta`);
+  if (!res.ok) throw new Error('Meta fetch failed: ' + res.status);
+  const data = await res.json();
+  return { title: data.title, author_name: data.channel, thumbnail_url: data.thumbnail };
 }
 
 // Получаем субтитры через Supadata API (бесплатно, без ключа, без CORS)
