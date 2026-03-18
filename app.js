@@ -1795,46 +1795,83 @@ function openMatWorkspace(fileLabel) {
       `Ссылка: ${ytUrl}`,
     ].filter(Boolean).join('\n');
 
-    notePrompt = `Ты опытный преподаватель-методист. Пользователь изучает YouTube-видео.
+    // Строим список всех таймкодов для вставки прямо в текст
+    let allTimecodes = '';
+    if (ytLines && ytLines.length > 0) {
+      allTimecodes = ytLines
+        .filter((l, i) => i % 3 === 0) // каждая 3я строка чтобы не перегружать
+        .slice(0, 120)
+        .map(l => `t=${l.offset}s → "${l.text.slice(0, 60)}"`)
+        .join('\n');
+    }
 
+    notePrompt = `Ты опытный преподаватель-методист. Твоя задача — создать детальный структурированный конспект урока на основе РЕАЛЬНЫХ субтитров видео.
+
+ИНФОРМАЦИЯ О ВИДЕО:
 ${videoInfo}
 ${hasTranscript ? transcriptBlock : ''}
+${allTimecodes ? `\nВСЕ ДОСТУПНЫЕ ТАЙМКОДЫ (используй их в тексте конспекта):\n${allTimecodes}` : ''}
 
-${hasTranscript
-  ? 'Используй РЕАЛЬНЫЙ ТЕКСТ СУБТИТРОВ выше как основу. Выдели ключевые моменты с реальными таймкодами из субтитров.'
-  : 'На основе названия видео и своих знаний составь подробный учебный конспект.'}
+ТРЕБОВАНИЯ К КОНСПЕКТУ:
+1. Используй ТОЛЬКО реальный текст субтитров — не придумывай ничего от себя
+2. Таймкоды вставляй прямо в текст везде где упоминается новая мысль или термин — не только в отдельном разделе
+3. Каждый таймкод оформляй как кликабельную ссылку: <a class="yt-ts-link" href="https://www.youtube.com/watch?v=${ytId}&t=СЕКУНДЫs" target="_blank">▶ М:СС</a>
+4. Минимум 10–15 таймкодов по всему конспекту
+5. Формулы пиши в LaTeX между $...$
+6. Только HTML, без markdown, без \`\`\`html
 
-Строго используй эту структуру (только HTML, без markdown, без \`\`\`html):
+Строго используй эту структуру:
 <div class="ai-note">
+
   <div class="ai-note-section">
-    <div class="ai-note-section-title">О чём это видео</div>
-    <p>${hasTranscript ? 'На основе реального содержания:' : ''} 2–3 предложения: что разбирается, для кого, зачем смотреть.</p>
+    <div class="ai-note-section-title">О чём этот урок</div>
+    <p>2–3 предложения: главная тема, что узнает ученик, для какого класса/уровня.</p>
   </div>
+
   <div class="ai-note-section">
-    <div class="ai-note-section-title">Ключевые моменты с таймкодами</div>
+    <div class="ai-note-section-title">Содержание урока</div>
+    <p>Подробный пересказ урока по смысловым блокам. После каждого нового смыслового блока или важной мысли ставь таймкод прямо в тексте: <a class="yt-ts-link" href="https://www.youtube.com/watch?v=${ytId}&t=СЕКУНДЫs" target="_blank">▶ М:СС</a>. Минимум 8 таймкодов внутри этого раздела. Пиши развёрнуто — 200–300 слов.</p>
+  </div>
+
+  <div class="ai-note-section">
+    <div class="ai-note-section-title">Ключевые моменты</div>
     <ul>
-      <li><a class="yt-ts-link" href="https://www.youtube.com/watch?v=${ytId}&t=СЕКУНДЫs" target="_blank">▶ М:СС</a> <strong>Тема момента</strong> — что объясняется в этом фрагменте</li>
+      <li><a class="yt-ts-link" href="https://www.youtube.com/watch?v=${ytId}&t=СЕКУНДЫs" target="_blank">▶ М:СС</a> <strong>Название момента</strong> — краткое описание что происходит в этом фрагменте</li>
     </ul>
-    <p style="font-size:11px;color:var(--tx2);margin-top:4px">${hasTranscript ? '↑ Таймкоды из реальных субтитров' : '↑ Нажми ▶ — откроется YouTube ровно на этом месте'}</p>
+    <p style="font-size:11px;color:var(--tx2);margin-top:4px">↑ Нажми ▶ чтобы перейти к этому месту в видео</p>
   </div>
+
   <div class="ai-note-section">
     <div class="ai-note-section-title">Основные понятия</div>
-    <ul><li><strong>Термин</strong> — определение своими словами</li></ul>
+    <ul>
+      <li><strong>Термин</strong> — определение своими словами + <a class="yt-ts-link" href="https://www.youtube.com/watch?v=${ytId}&t=СЕКУНДЫs" target="_blank">▶ где объясняется</a></li>
+    </ul>
   </div>
+
   <div class="ai-note-section">
-    <div class="ai-note-section-title">Ключевые формулы</div>
-    <p>Каждая формула на отдельной строке в LaTeX: $формула$ — пояснение</p>
+    <div class="ai-note-section-title">Формулы и законы</div>
+    <p>Каждая формула на отдельной строке: $формула$ — пояснение + таймкод где разбирается</p>
   </div>
+
   <div class="ai-note-section">
-    <div class="ai-note-section-title">Типичные ошибки</div>
-    <ul><li>Ошибка — как избежать</li></ul>
+    <div class="ai-note-section-title">Примеры и опыты из урока</div>
+    <ul>
+      <li><a class="yt-ts-link" href="https://www.youtube.com/watch?v=${ytId}&t=СЕКУНДЫs" target="_blank">▶ М:СС</a> <strong>Название опыта/примера</strong> — что показали и какой вывод</li>
+    </ul>
   </div>
+
+  <div class="ai-note-section">
+    <div class="ai-note-section-title">Домашнее задание</div>
+    <p>Если в видео упоминалось ДЗ — выпиши его точно. Если нет — напиши "не задавалось".</p>
+  </div>
+
   <div class="ai-note-section">
     <div class="ai-note-section-title">Главное запомнить</div>
-    <ul><li>Ключевой тезис</li></ul>
+    <ul><li>Ключевой тезис урока одним предложением</li></ul>
   </div>
+
 </div>
-Отвечай только HTML. Без вступления. ${hasTranscript ? 'Опирайся на реальный текст субтитров.' : 'Используй минимум 5 таймкодов.'} На русском языке.`;
+Отвечай ТОЛЬКО HTML. Без вступления и послесловия. На русском языке. Все таймкоды должны быть реальными секундами из субтитров.`;
 
   } else {
     // Обычный файл — старая логика
