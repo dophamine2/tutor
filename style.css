@@ -2619,9 +2619,127 @@ h1 { font-size:20px; font-weight:900; letter-spacing:-.4px; }
 }
 
 @media (max-width: 640px) {
+  /* === Оверлей — на весь экран без отступов === */
+  .matws-ov {
+    align-items: stretch;
+    justify-content: stretch;
+  }
+  .matws-workspace {
+    height: 100dvh;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* === Топбар === */
+  .matws-topbar {
+    padding: 0 10px;
+    height: 48px;
+    gap: 6px;
+  }
+  .matws-topbar-title {
+    font-size: 12px;
+  }
+  .matws-new-btn {
+    padding: 6px 10px;
+    font-size: 11px;
+    gap: 4px;
+  }
+  .matws-new-btn svg { display: none; }
+  .matws-back-btn {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  /* === Скрываем сайдбар полностью === */
   .matws-sidebar { display: none; }
-  .matws-summary { padding: 16px; }
-  .matws-topbar { padding: 0 12px; }
+
+  /* === Тело: вертикальный флекс === */
+  .matws-body {
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* === Конспект — скролл, занимает оставшееся место === */
+  .matws-main {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .matws-summary {
+    flex: 1;
+    padding: 14px 14px 10px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border-bottom: none;
+  }
+  .matws-summary-title {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  .matws-summary-body {
+    font-size: 13px;
+    line-height: 1.7;
+  }
+
+  /* === Чат-область: прижата к низу, не растягивается === */
+  .matws-chat-area {
+    flex-shrink: 0;
+    padding: 8px 10px 10px;
+    gap: 7px;
+    border-top: 1px solid var(--border);
+    background: var(--s);
+  }
+
+  /* === Сообщения: ограниченная высота со скроллом === */
+  .matws-chat-msgs {
+    max-height: 130px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px;
+  }
+
+  /* === Кнопки-подсказки: горизонтальный скролл === */
+  .mat-suggs {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    gap: 6px;
+    padding: 0;
+    scrollbar-width: none;
+  }
+  .mat-suggs::-webkit-scrollbar { display: none; }
+  .mat-sugg {
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-size: 11px;
+    padding: 5px 11px;
+  }
+
+  /* === Поле ввода === */
+  .matws-inp-wrap {
+    border-radius: 11px;
+    padding: 3px 3px 3px 12px;
+  }
+  .matws-inp {
+    font-size: 14px;
+    padding: 8px 0 !important;
+  }
+  .matws-send-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+  }
+
+  /* === Экран обработки === */
+  .matws-processing {
+    padding: 20px 16px;
+  }
+  .mpr-card {
+    max-width: 100%;
+    border-radius: 14px;
+  }
 }
 /* ══ Sidebar sub-link ══════════════════════════ */
 .sn-sub {
