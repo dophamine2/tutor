@@ -1565,31 +1565,20 @@ async function fetchYouTubeMeta(videoId) {
 // Получаем субтитры через Supadata API (бесплатно, без ключа, без CORS)
 async function fetchYouTubeTranscript(videoId) {
   try {
-    // Вариант 1: Supadata
-    const res = await fetch(`https://api.supadata.ai/v1/youtube/transcript?videoId=${videoId}&lang=ru`);
-    if (res.ok) {
-      const data = await res.json();
-      // data.content — массив [{text, offset, duration}] или строка
-      if (Array.isArray(data.content)) {
-        return data.content.map(s => s.text).join(' ');
-      }
-      if (typeof data.content === 'string') return data.content;
+    const res = await fetch(`/.netlify/functions/transcript?videoId=${videoId}`);
+    if (!res.ok) { console.warn('[Transcript] Function returned', res.status); return null; }
+    const data = await res.json();
+    if (data.transcript) {
+      if (data.lines && matContext) matContext.transcriptLines = data.lines;
+      console.log('[Transcript] OK, lang:', data.language, 'chars:', data.transcript.length);
+      return data.transcript;
     }
-  } catch(e) { console.warn('[Transcript] Supadata failed:', e.message); }
-
-  try {
-    // Вариант 2: youtubetranscript.com proxy
-    const res2 = await fetch(`https://youtubetranscript.com/?server_vid=${videoId}`);
-    if (res2.ok) {
-      const xml = await res2.text();
-      const texts = [...xml.matchAll(/<text[^>]*>([^<]+)<\/text>/g)].map(m =>
-        m[1].replace(/&amp;/g,'&').replace(/&#39;/g,"'").replace(/&quot;/g,'"')
-      );
-      if (texts.length > 0) return texts.join(' ');
-    }
-  } catch(e) { console.warn('[Transcript] Proxy failed:', e.message); }
-
-  return null; // субтитры недоступны
+    console.warn('[Transcript] Empty:', data.error);
+    return null;
+  } catch(e) {
+    console.warn('[Transcript] Failed:', e.message);
+    return null;
+  }
 }
 
 async function submitMatLink() {
@@ -1620,7 +1609,7 @@ async function submitMatLink() {
     if (el) el.textContent = txt;
   });
 
-  matContext = { type: 'youtube', url: val, ytId, title: null, channel: null, transcript: null };
+  matContext = { type: 'youtube', url: val, ytId, title: null, channel: null, transcript: null, transcriptLines: null };
   openMatWorkspaceFlow('▶ YouTube');
 
   // Загружаем метаданные + субтитры параллельно
@@ -1774,9 +1763,23 @@ function openMatWorkspace(fileLabel) {
     const ytTranscript = ctx.transcript || null;
 
     // Если есть субтитры — используем реальный текст
-    const transcriptBlock = ytTranscript
-      ? `\n\nРЕАЛЬНЫЕ СУБТИТРЫ ВИДЕО (используй этот текст как основу):\n"""\n${ytTranscript.slice(0, 12000)}\n"""`
-      : '';
+    const ytLines = ctx.transcriptLines || null;
+    let transcriptBlock = '';
+    if (ytTranscript) {
+      if (ytLines && ytLines.length > 0) {
+        const keyLines = [];
+        let lastOffset = -30;
+        ytLines.forEach(l => {
+          if (l.offset - lastOffset >= 30) {
+            keyLines.push(`[${Math.floor(l.offset/60)}:${String(l.offset%60).padStart(2,'0')}] (t=${l.offset}s) ${l.text}`);
+            lastOffset = l.offset;
+          }
+        });
+        transcriptBlock = `\n\nРЕАЛЬНЫЕ СУБТИТРЫ С ТАЙМКОДАМИ:\n"""\n${keyLines.slice(0, 80).join('\n')}\n"""\n\nПолный текст:\n${ytTranscript.slice(0, 8000)}`;
+      } else {
+        transcriptBlock = `\n\nРЕАЛЬНЫЕ СУБТИТРЫ ВИДЕО:\n"""\n${ytTranscript.slice(0, 12000)}\n"""`;
+      }
+    }
 
     const hasTranscript = !!ytTranscript;
 
