@@ -190,23 +190,21 @@ function saveMe()     { const u = allUsers(); u[currentUser.email] = currentUser
 
 // ── Boot ──────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  const DEV_EMAIL = 'maxim@dev.local';
-  const users = allUsers();
-  if (!users[DEV_EMAIL]) {
-    users[DEV_EMAIL] = {
-      name: 'Максим', sname: '', email: DEV_EMAIL, pass: btoa('devpass'),
-      goal: 'ege', createdAt: Date.now(), subject: 'physics', perception: 'visual',
-      level: 'mid', diagScore: 3, progress: {},
-      duelStats: { total: 0, wins: 0, losses: 0, rating: 0 },
-      duelHistory: [], streak: 5, lastLogin: null,
-      activity: [Date.now()], totalTasks: 0, correctTasks: 0,
-      selectedClass: null,
-    };
-    saveUsers(users);
+  try {
+    const savedEmail = DB_get('np_session');
+    if (savedEmail) {
+      const users = allUsers();
+      if (users[savedEmail]) {
+        currentUser = users[savedEmail];
+        bootDashboard();
+        return;
+      }
+    }
+  } catch(e) {
+    console.warn('Session restore failed:', e);
   }
-  currentUser = users[DEV_EMAIL];
-  DB_set('np_session', DEV_EMAIL);
-  bootDashboard();
+  showScreen('auth');
+  switchAuth('login');
 });
 
 function showScreen(id) {
