@@ -39,12 +39,10 @@ exports.handler = async function(event) {
       videoId,
       context: {
         client: {
-          clientName: 'ANDROID',
-          clientVersion: '19.09.37',
-          androidSdkVersion: 30,
+          clientName: 'TVHTML5',
+          clientVersion: '7.20240101',
           hl: 'ru',
-          gl: 'RU',
-          utcOffsetMinutes: 180
+          gl: 'RU'
         }
       }
     });
@@ -56,9 +54,9 @@ exports.handler = async function(event) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'User-Agent': 'com.google.android.youtube/19.09.37 (Linux; U; Android 11) gzip',
-          'X-YouTube-Client-Name': '3',
-          'X-YouTube-Client-Version': '19.09.37',
+          'User-Agent': 'Mozilla/5.0 (SMART-TV; Linux; Tizen 6.0) AppleWebKit/538.1 (KHTML, like Gecko) Version/6.0 TV Safari/538.1',
+          'X-YouTube-Client-Name': '7',
+          'X-YouTube-Client-Version': '7.20240101',
           'Content-Length': Buffer.byteLength(playerPayload)
         }
       };
