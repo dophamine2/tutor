@@ -853,11 +853,17 @@
         </div>
         <div class="matws-chat-area">
           <div class="matws-chat-msgs" id="mat-chat-msgs"></div>
-          <div class="mat-suggs" id="mat-suggs">
-            <button class="mat-sugg" onclick="doMatQ(this)">Кратко объясни тему</button>
-            <button class="mat-sugg" onclick="doMatQ(this)">Составь план</button>
-            <button class="mat-sugg" onclick="doMatQ(this)">Сделай конспект</button>
-            <button class="mat-sugg" onclick="doMatQ(this)">Задай вопросы</button>
+          <div class="mat-suggs-wrap" id="mat-suggs-wrap">
+            <button class="mat-suggs-toggle" id="mat-suggs-toggle" onclick="toggleMatSuggs()">
+              <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15"/></svg>
+              Вопросы для самопроверки
+            </button>
+            <div class="mat-suggs" id="mat-suggs">
+              <button class="mat-sugg" onclick="doMatQ(this)">Кратко объясни тему</button>
+              <button class="mat-sugg" onclick="doMatQ(this)">Составь план</button>
+              <button class="mat-sugg" onclick="doMatQ(this)">Сделай конспект</button>
+              <button class="mat-sugg" onclick="doMatQ(this)">Задай вопросы</button>
+            </div>
           </div>
           <div class="matws-inp-wrap">
             <input id="mat-inp" class="matws-inp" placeholder="Задай любой свой вопрос..." onkeydown="if(event.key==='Enter')sendMatChat()"/>

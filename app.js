@@ -2783,3 +2783,11 @@ function syncMobileNav(tabName) {
   const btn = document.querySelector('.mn-btn[data-t="' + tabName + '"]');
   if (btn) btn.classList.add('active');
 }
+
+function toggleMatSuggs() {
+  const suggs  = document.getElementById('mat-suggs');
+  const toggle = document.getElementById('mat-suggs-toggle');
+  if (!suggs) return;
+  const collapsed = suggs.classList.toggle('hidden');
+  toggle.classList.toggle('collapsed', collapsed);
+}
