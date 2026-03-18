@@ -921,7 +921,8 @@ function onApiReply(reply) {
 
 function showSv3(reply) {
   svShow(3);
-  sv3AddMsg('<div class="sol-answer-wrap">' + renderSolveAnswer(reply) + '</div>', false);
+  const rendered = solveMode === 'guide' ? renderGuideAnswer(reply) : renderSolveAnswer(reply);
+  sv3AddMsg('<div class="sol-answer-wrap">' + rendered + '</div>', false);
   // Сохранить задачу
   saveSolvedTask(
     document.getElementById('solve-inp').value.trim(),
@@ -1272,6 +1273,78 @@ function renderFreeText(text) {
     .join('');
 }
 
+function renderGuideAnswer(text) {
+  const lines = text.split('\n');
+  let html = '';
+  let secOpen = false;
+  let secKey  = '';
+
+  function closeSection() {
+    if (secOpen) { html += '</div></div>'; secOpen = false; secKey = ''; }
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // Заголовки: 1. Дано / 2. Найти / 3. Решение
+    const secNum = line.match(/^(\d+)\.\s*(Дано|Найти|Решение)\s*$/i);
+    const secCap = !secNum && line.match(/^(ДАНО|НАЙТИ|РЕШЕНИЕ)[:.]?\s*$/i);
+    if (secNum || secCap) {
+      closeSection();
+      const rawName = secNum ? secNum[2] : secCap[1];
+      const label = rawName.charAt(0).toUpperCase() + rawName.slice(1).toLowerCase();
+      secKey = label.toLowerCase();
+      const num = secNum ? secNum[1] : {'дано':'1','найти':'2','решение':'3'}[secKey] || '';
+      const delayMap = { 'дано':'0.05s', 'найти':'0.15s', 'решение':'0.28s' };
+      html += `<div class="sol-section sol-section-anim" style="animation-delay:${delayMap[secKey]||'0s'}">`;
+      html += `<div class="sol-head"><span class="sol-num">${num}.</span> ${label}</div>`;
+      html += `<div class="sol-body">`;
+      secOpen = true;
+      continue;
+    }
+
+    // Раздел физики:
+    const razdelM = line.match(/^Раздел физики:\s*(.+)$/i);
+    if (razdelM) {
+      html += `<div class="sol-line" style="color:var(--tx2);font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em">${esc(razdelM[1])}</div>`;
+      continue;
+    }
+
+    // Подсказка:
+    const hintM = line.match(/^Подсказка:\s*(.+)$/i);
+    if (hintM) {
+      html += `<div class="sol-sub-wrap"><span class="sol-sub-lbl">Подсказка:</span> <span class="sol-sub-val">${autoKatex(hintM[1])}</span></div>`;
+      continue;
+    }
+
+    // Вопрос:
+    const qM = line.match(/^Вопрос:\s*(.+)$/i);
+    if (qM) {
+      html += `<div class="guide-q-block sol-formula-anim">${esc(qM[1])}</div>`;
+      continue;
+    }
+
+    // Верно / Точно / Правильно
+    if (/^(Верно|Точно|Правильно|Отлично)[.!]?$/i.test(line)) {
+      html += `<div class="guide-correct-line">${esc(line)}</div>`;
+      continue;
+    }
+
+    // Строки Дано/Найти — через renderDataLine
+    if (secKey === 'дано' || secKey === 'найти') {
+      html += renderDataLine(line.replace(/^[•·—–\-]\s+/, ''));
+      continue;
+    }
+
+    // Обычный текст
+    html += `<div class="sol-line">${autoKatex(line)}</div>`;
+  }
+
+  closeSection();
+  return html || `<div class="sol-line">${esc(text)}</div>`;
+}
+
 function renderFollowupText(text) {
   return '<div class="rn-followup">' +
     text.split('\n')
@@ -1451,7 +1524,10 @@ async function doSolveFollowup(question, btn) {
   try {
     const reply = await gemini(system, msg);
     loader.remove();
-    sv3AddMsg(renderFollowupText(reply), false);
+    const rendered = solveMode === 'guide'
+      ? '<div class="sol-answer-wrap">' + renderGuideAnswer(reply) + '</div>'
+      : renderFollowupText(reply);
+    sv3AddMsg(rendered, false);
   } catch(e) {
     loader.remove();
     sv3AddMsg('<div class="rn-line">Ошибка соединения с AI.</div>', false);
