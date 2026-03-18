@@ -71,6 +71,19 @@ exports.handler = async function(event) {
     });
 
     const player = JSON.parse(playerRes.body);
+
+    // DEBUG
+    if (event.queryStringParameters?.debug === '1') {
+      return { statusCode: 200, headers, body: JSON.stringify({
+        status: playerRes.status,
+        hasCaptions: !!player?.captions,
+        captionsKeys: player?.captions ? Object.keys(player.captions) : null,
+        tracks: player?.captions?.playerCaptionsTracklistRenderer?.captionTracks || null,
+        playerKeys: Object.keys(player || {}),
+        playabilityStatus: player?.playabilityStatus?.status || null
+      })};
+    }
+
     const tracks = player?.captions?.playerCaptionsTracklistRenderer?.captionTracks;
 
     if (!tracks || tracks.length === 0) {
